@@ -1,0 +1,47 @@
+`timescale 1ns / 1ps
+module tb_top_riscv;
+
+    reg clk;
+    reg reset;
+
+    wire [31:0] pc;
+    wire [31:0] instruction;
+    wire [5:0] alu_ctrl;
+    wire lb;
+    wire mem_to_reg;
+    wire beq_ctrl;
+    wire bneq_ctrl;
+
+    // Instantiate processor top with internal signal outputs
+    top_riscv uut (
+        .clk(clk),
+        .reset(reset),
+        .pc(pc),
+        .instruction_out(instruction),
+        .alu_control(alu_ctrl),
+        .lb(lb),
+        .mem_to_reg(mem_to_reg),
+        .beq_control(beq_ctrl),
+        .bneq_control(bneq_ctrl)
+    );
+
+    // Clock generator: 10ns period (100 MHz)
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    initial begin
+        reset = 1;
+        #50;               // Hold reset for 50 ns
+        reset = 0;
+        #500;              // Let processor run for 500 ns
+        $stop;             // Stop simulation
+    end
+
+    // Monitor signals
+    initial begin
+        $display("Time\tReset\tPC\t\tInstruction\tALU_CTRL\tLB\tMEM_TO_REG\tBEQ\tBNEQ");
+        $monitor("%0t\t%b\t%h\t%h\t%b\t%b\t%b\t%b", 
+                 $time, reset, pc, instruction, alu_ctrl, lb, mem_to_reg, beq_ctrl, bneq_ctrl);
+    end
+
+endmodule
