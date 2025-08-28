@@ -1,0 +1,127 @@
+// top_riscv.v
+`timescale 1ns / 1ps
+module top_riscv(
+    input clk,
+    input reset,
+    output [31:0] pc,
+    output [31:0] instruction_out,
+    output [5:0] alu_control,
+    output lb,
+    output mem_to_reg,
+    output beq_control,
+    output bneq_control
+);
+
+    wire bgeq_control;
+    wire blt_control;
+    wire jump;
+    wire sw;
+    wire [31:0] read_data_addr_dm;
+
+    wire [31:0] imm_val_top;
+    wire [31:0] imm_val_branch_top;
+    wire [31:0] imm_val_lui;
+    wire [31:0] imm_val_jump;
+    wire [31:0] imm_val;
+    wire beq, bneq;
+    wire bge, blt;
+    wire [31:0] current_pc;
+    wire [31:0] immediate_value_store_temp;
+    wire [31:0] immediate_value_store;
+    wire [31:0] base_address;
+    wire zero_flag = 0;
+    wire reg_dst = 0;
+    wire mem_to_reg_int;
+    wire lb_int;
+    wire beq_control_int;
+    wire bneq_control_int;
+
+    // Instruction Fetch Unit
+    instruction_fetch_unit ifu(
+        clk,
+        reset,
+        imm_val_branch_top,
+        imm_val_jump,
+        beq,
+        bneq,
+        bge,
+        blt,
+        jump,
+        pc,
+        current_pc
+    );
+
+    // Instruction Memory
+    instruction_memory imu(
+        clk,
+        pc,
+        reset,
+        instruction_out
+    );
+
+    // Control Unit
+    control_unit cu(
+        reset,
+        instruction_out[31:25],
+        instruction_out[14:12],
+        instruction_out[6:0],
+        alu_control,
+        lb_int,
+        mem_to_reg_int,
+        bneq_control_int,
+        beq_control_int,
+        bgeq_control,
+        blt_control,
+        jump,
+        sw,
+        lui_control
+    );
+
+    assign lb = lb_int;
+    assign mem_to_reg = mem_to_reg_int;
+    assign beq_control = beq_control_int;
+    assign bneq_control = bneq_control_int;
+
+    // Data Path
+    data_path dpu(
+        clk,
+        reset,
+        instruction_out[19:15],
+        instruction_out[24:20],
+        instruction_out[11:7],
+        alu_control,
+        jump,
+        beq_control,
+        zero_flag,
+        reg_dst,
+        mem_to_reg,
+        bneq_control,
+        immediate_value_store,
+        instruction_out[24:20],
+        lb,
+        sw,
+        bgeq_control,
+        blt_control,
+        lui_control,
+        imm_val_lui,
+        imm_val_jump,
+        current_pc,
+        read_data_addr_dm,
+        beq,
+        bneq,
+        bge,
+        blt
+    );
+
+    // Immediate values per RISC-V ISA spec
+    assign imm_val_top       = {{20{instruction_out[31]}}, instruction_out[31:20]};
+    assign imm_val_branch_top= {{19{instruction_out[31]}}, instruction_out[31], instruction_out[7], instruction_out[30:25], instruction_out[11:8], 1'b0};
+    assign imm_val_lui       = {instruction_out[31:12], 12'b0};
+    assign imm_val_jump      = {{11{instruction_out[31]}}, instruction_out[31], instruction_out[19:12], instruction_out[20], instruction_out[30:21], 1'b0};
+    assign imm_val           = imm_val_top;
+
+    assign immediate_value_store_temp = {{20{instruction_out[31]}}, instruction_out[31:20]};
+    assign base_address = instruction_out[19:15];
+    assign immediate_value_store = immediate_value_store_temp + base_address;
+
+endmodule
