@@ -28,21 +28,21 @@ module control_unit(
         jump          = 0;
         sw            = 0;
         lui_control   = 0;
+
         if (reset) begin
             alu_control = 6'b000000;
-        end
-        else begin
+        end else begin
             case (opcode)
-                7'b0110011: begin
+                7'b0110011: begin // R-type instructions
                     case (func3)
                         3'b000: alu_control = (func7 == 7'b0000000) ? 6'b000001 : 6'b000010; // add / sub
-                        3'b001: if (func7 == 7'b0000000) alu_control = 6'b000011; // sll
-                        3'b010: if (func7 == 7'b0000000) alu_control = 6'b000100; // slt
-                        3'b011: if (func7 == 7'b0000000) alu_control = 6'b000101; // sltu
-                        3'b100: if (func7 == 7'b0000000) alu_control = 6'b000110; // xor
-                        3'b101: alu_control = (func7 == 7'b0000000) ? 6'b000111 : 6'b001000; // srl / sra
-                        3'b110: if (func7 == 7'b0000000) alu_control = 6'b001001; // or
-                        3'b111: if (func7 == 7'b0000000) alu_control = 6'b001010; // and
+                        3'b001: if (func7 == 7'b0000000) alu_control = 6'b000011;             // sll
+                        3'b010: if (func7 == 7'b0000000) alu_control = 6'b000100;             // slt
+                        3'b011: if (func7 == 7'b0000000) alu_control = 6'b000101;             // sltu
+                        3'b100: if (func7 == 7'b0000000) alu_control = 6'b000110;             // xor
+                        3'b101: alu_control = (func7 == 7'b0000000) ? 6'b000111 : 6'b001000;  // srl / sra
+                        3'b110: if (func7 == 7'b0000000) alu_control = 6'b001001;             // or
+                        3'b111: if (func7 == 7'b0000000) alu_control = 6'b001010;             // AND
                     endcase
                 end
                 7'b0010011: begin
